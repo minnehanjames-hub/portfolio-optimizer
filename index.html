@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Monte Carlo Portfolio Optimizer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-elevated: #020617;
+      --card: #020617;
+      --card-border: rgba(148, 163, 184, 0.3);
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.12);
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --danger: #f97373;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at top left, #0f172a 0, #020617 42%, #000000 100%);
+      color: var(--text);
+    }
+
+    .app-shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 16px 64px;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .linkedin-badge a {
+      text-decoration: none;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.65);
+      font-size: 0.85rem;
+      background: radial-gradient(circle at top left, #0b1120 0, #020617 70%);
+    }
+
+    .linkedin-badge img {
+      width: 14px;
+      height: 14px;
+    }
+
+    .layout-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 18px;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .layout-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .card {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 18px;
+      border: 1px solid var(--card-border);
+      padding: 16px 18px 18px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.6);
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin: 0 0 0.25rem;
+    }
+
+    .card small {
+      color: var(--text-muted);
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: #020617;
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+
+    input:focus, select:focus {
+      outline: 1px solid var(--accent);
+      border-color: var(--accent);
+    }
+
+    .chips-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+
+    .chip {
+      font-size: 0.78rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--text-muted);
+    }
+
+    .chip-strong {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.8rem;
+    }
+
+    th, td {
+      padding: 6px 4px;
+      text-align: left;
+      border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+    }
+
+    th {
+      font-weight: 500;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .holdings-table input, .holdings-table select {
+      font-size: 0.75rem;
+      padding: 4px 6px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 7px 13px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      font-family: inherit;
+      margin-top: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #22c55e, #4ade80);
+      color: #022c22;
+      box-shadow: 0 10px 25px rgba(34, 197, 94, 0.35);
+    }
+
+    .btn-secondary {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--text-muted);
+    }
+
+    .btn-sm {
+      padding: 4px 9px;
+      font-size: 0.75rem;
+      margin-top: 0;
+    }
+
+    .btn-danger {
+      background: rgba(127, 29, 29, 0.9);
+      border: 1px solid rgba(248, 113, 113, 0.7);
+      color: #fee2e2;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .stat-card {
+      padding: 8px 9px;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: radial-gradient(circle at top left, #0b1120 0, #020617 70%);
+      font-size: 0.8rem;
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      margin-bottom: 2px;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      margin-left: 5px;
+    }
+
+    .projection-table td, .projection-table th {
+      font-size: 0.78rem;
+    }
+
+    .prose {
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: var(--text-muted);
+      white-space: pre-line;
+    }
+
+    .error {
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+
+    .footer {
+      margin-top: 24px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="top-row">
+      <div>
+        <h1>Monte Carlo Portfolio Optimizer</h1>
+        <p class="subtitle">
+          Interactive, client-side simulator for portfolio diversification, projected outcomes, and risk metrics.
+          Educational only · Not financial advice.
+        </p>
+      </div>
+      <div class="linkedin-badge">
+        <a href="https://www.linkedin.com/in/james-thomas-minnehan-975b75533b/" target="_blank">
+          <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" />
+          <span>Connect on LinkedIn</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="layout-grid">
+      <!-- LEFT: inputs -->
+      <div class="card">
+        <h2>1 · Portfolio Inputs</h2>
+        <small>Define your holdings and assumptions. Returns are generic placeholders, not live market data.</small>
+
+        <div class="chips-row">
+          <div class="chip">Stocks: 8% / 15% vol</div>
+          <div class="chip">Bonds: 3% / 5% vol</div>
+          <div class="chip">Cash: 1% / 1% vol</div>
+          <div class="chip">Other: 6% / 20% vol</div>
+        </div>
+
+        <div class="chips-row">
+          <div>
+            <label>Horizon (years)</label>
+            <select id="horizonYears">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="5" selected>5</option>
+            </select>
+          </div>
+          <div>
+            <label>Monte Carlo simulations</label>
+            <select id="numSims">
+              <option value="500">500</option>
+              <option value="1000" selected>1000</option>
+              <option value="2000">2000</option>
+            </select>
+          </div>
+          <div>
+            <label>Risk-free rate (% / year)</label>
+            <input type="number" id="rfRate" value="2" step="0.25" />
+          </div>
+        </div>
+
+        <h3 style="margin-top:14px; font-size:0.9rem;">Holdings</h3>
+        <table class="holdings-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Amount ($)</th>
+              <th>Type</th>
+              <th>Custom μ (%/yr)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="holdingsBody">
+          </tbody>
+        </table>
+        <button class="btn btn-secondary btn-sm" id="addRowBtn">+ Add Holding</button>
+
+        <div id="inputError" class="error" style="display:none;"></div>
+
+        <button class="btn btn-primary" id="runBtn">
+          🚀 Run Monte Carlo
+        </button>
+      </div>
+
+      <!-- RIGHT: diversification & projections -->
+      <div class="card">
+        <h2>2 · Diversification & Projections</h2>
+        <small>Weights, effective holdings, and projected portfolio ranges.</small>
+
+        <div id="diversificationSection" style="margin-top: 10px;"></div>
+        <div id="projectionSection" style="margin-top: 14px;"></div>
+      </div>
+    </div>
+
+    <!-- Full-width lower panel -->
+    <div class="card" style="margin-top:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div>
+          <h2>3 · Risk & Performance Metrics</h2>
+          <small>Based on simulated monthly returns vs a generic equity benchmark.</small>
+        </div>
+        <span class="tag">Sharpe · Alpha · Beta · TE · IR · Sortino</span>
+      </div>
+
+      <div id="metricsGrid" class="stats-grid"></div>
+
+      <h3 style="margin-top:18px; font-size:0.95rem;">4 · AI-style Commentary</h3>
+      <div id="commentary" class="prose"></div>
+    </div>
+
+    <div class="footer">
+      Built as a browser-only tool using HTML, CSS, and vanilla JavaScript. All simulations are hypothetical and for educational use only.
+    </div>
+  </div>
+
+  <script>
+    // ---------- Utility functions ----------
+
+    function randn() {
+      // Box-Muller transform
+      let u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    }
+
+    function mean(arr) {
+      if (arr.length === 0) return NaN;
+      return arr.reduce((a, b) => a + b, 0) / arr.length;
+    }
+
+    function std(arr) {
+      if (arr.length < 2) return NaN;
+      const m = mean(arr);
+      const v = arr.reduce((s, x) => s + Math.pow(x - m, 2), 0) / (arr.length - 1);
+      return Math.sqrt(v);
+    }
+
+    function quantile(arr, q) {
+      if (arr.length === 0) return NaN;
+      const sorted = [...arr].sort((a, b) => a - b);
+      const pos = (sorted.length - 1) * q;
+      const base = Math.floor(pos);
+      const rest = pos - base;
+      if ((sorted[base + 1] !== undefined)) {
+        return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+      } else {
+        return sorted[base];
+      }
+    }
+
+    function covariance(a, b) {
+      if (a.length !== b.length || a.length < 2) return NaN;
+      const ma = mean(a);
+      const mb = mean(b);
+      let s = 0;
+      for (let i = 0; i < a.length; i++) {
+        s += (a[i] - ma) * (b[i] - mb);
+      }
+      return s / (a.length - 1);
+    }
+
+    // ---------- Holdings management ----------
+
+    const holdingsBody = document.getElementById("holdingsBody");
+    const addRowBtn = document.getElementById("addRowBtn");
+
+    function defaultMuSigma(assetType) {
+      switch (assetType) {
+        case "Stocks": return { mu: 0.08, sigma: 0.15 };
+        case "Bonds":  return { mu: 0.03, sigma: 0.05 };
+        case "Cash":   return { mu: 0.01, sigma: 0.01 };
+        default:       return { mu: 0.06, sigma: 0.20 };
+      }
+    }
+
+    function addHoldingRow(name = "", amount = 1000, type = "Stocks", customMu = "") {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td><input type="text" value="${name}" placeholder="Asset" /></td>
+        <td><input type="number" value="${amount}" min="0" step="100" /></td>
+        <td>
+          <select>
+            <option value="Stocks">Stocks</option>
+            <option value="Bonds">Bonds</option>
+            <option value="Cash">Cash</option>
+            <option value="Other">Other</option>
+          </select>
+        </td>
+        <td><input type="number" value="${customMu}" step="0.5" placeholder="optional" /></td>
+        <td><button class="btn btn-danger btn-sm remove-row">×</button></td>
+      `;
+
+      holdingsBody.appendChild(tr);
+      tr.querySelector("select").value = type;
+
+      tr.querySelector(".remove-row").addEventListener("click", () => {
+        holdingsBody.removeChild(tr);
+      });
+    }
+
+    addRowBtn.addEventListener("click", () => addHoldingRow());
+
+    // initial rows
+    addHoldingRow("Asset 1", 2000, "Stocks", "");
+    addHoldingRow("Asset 2", 1500, "Bonds", "");
+    addHoldingRow("Asset 3", 500, "Cash", "");
+
+    function readHoldings() {
+      const rows = holdingsBody.querySelectorAll("tr");
+      const holdings = [];
+      rows.forEach((row, idx) => {
+        const [nameInput, amountInput, typeSelect, muInput] = row.querySelectorAll("input, select");
+        const name = nameInput.value.trim() || `Asset ${idx + 1}`;
+        const amount = parseFloat(amountInput.value) || 0;
+        const type = typeSelect.value;
+        const customMu = muInput.value !== "" ? parseFloat(muInput.value) / 100 : null;
+        const base = defaultMuSigma(type);
+        const mu = customMu !== null ? customMu : base.mu;
+        const sigma = base.sigma;
+        if (amount > 0) {
+          holdings.push({ name, amount, assetType: type, mu, sigma });
+        }
+      });
+      return holdings;
+    }
+
+    // ---------- Monte Carlo simulation ----------
+
+    function runMonteCarlo(holdings, nMonths, nSims) {
+      const initialValues = holdings.map(h => h.amount);
+      const totalInitial = initialValues.reduce((a, b) => a + b, 0);
+      if (totalInitial <= 0) throw new Error("Total portfolio value must be positive.");
+
+      const dt = 1 / 12;
+      const portfolioPaths = [];
+      for (let s = 0; s < nSims; s++) {
+        const path = new Array(nMonths + 1);
+        let assetVals = [...initialValues];
+        path[0] = totalInitial;
+        for (let t = 1; t <= nMonths; t++) {
+          for (let i = 0; i < holdings.length; i++) {
+            const { mu, sigma } = holdings[i];
+            const z = randn();
+            const growth = Math.exp((mu - 0.5 * sigma * sigma) * dt + sigma * Math.sqrt(dt) * z);
+            assetVals[i] *= growth;
+          }
+          const total = assetVals.reduce((a, b) => a + b, 0);
+          path[t] = total;
+        }
+        portfolioPaths.push(path);
+      }
+      return { portfolioPaths, totalInitial };
+    }
+
+    function simulateBenchmark(nMonths, nSims, mu = 0.07, sigma = 0.14) {
+      const dt = 1 / 12;
+      const paths = [];
+      for (let s = 0; s < nSims; s++) {
+        const path = new Array(nMonths + 1);
+        let v = 1.0;
+        path[0] = v;
+        for (let t = 1; t <= nMonths; t++) {
+          const z = randn();
+          const growth = Math.exp((mu - 0.5 * sigma * sigma) * dt + sigma * Math.sqrt(dt) * z);
+          v *= growth;
+          path[t] = v;
+        }
+        paths.push(path);
+      }
+      return paths;
+    }
+
+    function computeDiversification(holdings) {
+      const amounts = holdings.map(h => h.amount);
+      const total = amounts.reduce((a, b) => a + b, 0);
+      if (total <= 0) return { weights: {}, effectiveN: 0 };
+
+      const weights = holdings.map(h => h.amount / total);
+      const hhi = weights.reduce((s, w) => s + w * w, 0);
+      const effectiveN = hhi > 0 ? 1 / hhi : 0;
+      const weightMap = {};
+      holdings.forEach((h, i) => {
+        weightMap[h.name] = weights[i];
+      });
+      return { weights: weightMap, effectiveN, total };
+    }
+
+    function summarizeHorizons(portfolioPaths, initialValue, monthsList) {
+      const nSims = portfolioPaths.length;
+      const out = [];
+      monthsList.forEach(m => {
+        if (m >= portfolioPaths[0].length) return;
+        const values = [];
+        for (let s = 0; s < nSims; s++) values.push(portfolioPaths[s][m]);
+        const medianVal = quantile(values, 0.5);
+        const p10 = quantile(values, 0.1);
+        const p90 = quantile(values, 0.9);
+
+        out.push({
+          horizon: m,
+          medianVal,
+          p10,
+          p90,
+          medianRet: medianVal / initialValue - 1,
+          p10Ret: p10 / initialValue - 1,
+          p90Ret: p90 / initialValue - 1
+        });
+      });
+      return out;
+    }
+
+    function computeRiskMetrics(portfolioPaths, benchmarkPaths, rfAnnual, mainMonths) {
+      const nSims = portfolioPaths.length;
+      const nMonths = portfolioPaths[0].length - 1;
+
+      const portR = [];
+      const benchR = [];
+      for (let s = 0; s < nSims; s++) {
+        for (let t = 1; t <= nMonths; t++) {
+          const pr = (portfolioPaths[s][t] - portfolioPaths[s][t - 1]) / portfolioPaths[s][t - 1];
+          const br = (benchmarkPaths[s][t] - benchmarkPaths[s][t - 1]) / benchmarkPaths[s][t - 1];
+          portR.push(pr);
+          benchR.push(br);
+        }
+      }
+
+      const mPort = mean(portR);
+      const mBench = mean(benchR);
+      const stdPort = std(portR);
+      const stdBench = std(benchR);
+      const rfMonthly = rfAnnual / 12;
+
+      const annualMeanPort = Math.pow(1 + mPort, 12) - 1;
+      const annualMeanBench = Math.pow(1 + mBench, 12) - 1;
+
+      let sharpe = NaN;
+      if (stdPort > 0) {
+        sharpe = ((mPort - rfMonthly) / stdPort) * Math.sqrt(12);
+      }
+
+      const downside = portR.filter(r => r < rfMonthly);
+      let sortino = NaN;
+      if (downside.length > 0) {
+        const mDown = mean(downside.map(r => Math.pow(r - rfMonthly, 2)));
+        const downDev = Math.sqrt(mDown);
+        if (downDev > 0) {
+          sortino = ((mPort - rfMonthly) / downDev) * Math.sqrt(12);
+        }
+      }
+
+      let beta = NaN, alpha = NaN;
+      if (stdBench > 0) {
+        const covPB = covariance(portR, benchR);
+        const varB = stdBench * stdBench;
+        if (varB > 0) beta = covPB / varB;
+      }
+      if (!Number.isNaN(beta)) {
+        alpha = (annualMeanPort - rfAnnual) - beta * (annualMeanBench - rfAnnual);
+      }
+
+      const active = portR.map((r, i) => r - benchR[i]);
+      const mActive = mean(active);
+      const stdActive = std(active);
+      let trackingError = NaN, infoRatio = NaN;
+      if (stdActive > 0) {
+        trackingError = stdActive * Math.sqrt(12);
+        infoRatio = (mActive / stdActive) * Math.sqrt(12);
+      }
+
+      let hprMedian = NaN;
+      if (mainMonths < portfolioPaths[0].length) {
+        const hprs = [];
+        for (let s = 0; s < nSims; s++) {
+          hprs.push(portfolioPaths[s][mainMonths] / portfolioPaths[s][0] - 1);
+        }
+        hprMedian = quantile(hprs, 0.5);
+      }
+
+      return {
+        hprMedian,
+        annualMeanPort,
+        sharpe,
+        alpha,
+        beta,
+        trackingError,
+        infoRatio,
+        sortino
+      };
+    }
+
+    function fmtPct(x, decimals = 1) {
+      if (Number.isNaN(x) || x === null) return "n/a";
+      return (x * 100).toFixed(decimals) + "%";
+    }
+
+    function fmtNum(x, decimals = 2) {
+      if (Number.isNaN(x) || x === null) return "n/a";
+      return x.toFixed(decimals);
+    }
+
+    // ---------- Commentary ----------
+
+    function buildCommentary(holdings, weights, effectiveN, horizonYears, totalValue) {
+      const lines = [];
+      lines.push(`Your current simulated portfolio size is approximately $${totalValue.toLocaleString(undefined, {maximumFractionDigits:0})}.`);
+
+      if (effectiveN < 2) {
+        lines.push("The portfolio is very concentrated. A single position can drive most of the risk. Consider whether you want more names or asset classes.");
+      } else if (effectiveN < 4) {
+        lines.push("Diversification is moderate – there is some spread across positions, but a few holdings still dominate.");
+      } else {
+        lines.push("Position sizes are fairly diversified based on the effective number of holdings.");
+      }
+
+      for (const [name, w] of Object.entries(weights)) {
+        if (w > 0.5) {
+          lines.push(`${name} is above 50% of the portfolio, which creates substantial single-name risk.`);
+        } else if (w > 0.3) {
+          lines.push(`${name} is above 30% of the portfolio. Make sure that level of exposure matches your conviction and risk tolerance.`);
+        }
+      }
+
+      const wEquity = holdings.filter(h => h.assetType === "Stocks").reduce((s, h) => s + (weights[h.name] || 0), 0);
+      const wBonds = holdings.filter(h => h.assetType === "Bonds").reduce((s, h) => s + (weights[h.name] || 0), 0);
+      const wCash  = holdings.filter(h => h.assetType === "Cash").reduce((s, h) => s + (weights[h.name] || 0), 0);
+
+      if (horizonYears <= 1) {
+        if (wEquity > 0.7) {
+          lines.push("For a short horizon, a very high equity allocation can mean large short-term swings. More stable assets might reduce this volatility.");
+        }
+        if (wCash > 0.5) {
+          lines.push("A high cash weight for short horizons can preserve capital, but may cap upside if markets move higher.");
+        }
+      } else {
+        if (wEquity < 0.4) {
+          lines.push("For multi-year horizons, very low equity exposure may limit long-term growth relative to risk-free assets.");
+        }
+        if (wCash > 0.3) {
+          lines.push("Holding a lot of cash over many years can drag on returns. Some of that capital might be redeployed into assets aligned with your risk profile.");
+        }
+        if (wBonds < 0.1 && wEquity > 0.8) {
+          lines.push("There is little fixed-income exposure and a very high equity weight. Defensive assets can sometimes help buffer drawdowns.");
+        }
+      }
+
+      lines.push("These observations are generic, based solely on the simulated inputs you provided and are NOT personal financial advice.");
+      return lines.join("\n\n");
+    }
+
+    // ---------- Wiring everything together ----------
+
+    const runBtn = document.getElementById("runBtn");
+    const inputError = document.getElementById("inputError");
+    const diversificationSection = document.getElementById("diversificationSection");
+    const projectionSection = document.getElementById("projectionSection");
+    const metricsGrid = document.getElementById("metricsGrid");
+    const commentaryEl = document.getElementById("commentary");
+
+    runBtn.addEventListener("click", () => {
+      inputError.style.display = "none";
+      inputError.textContent = "";
+      diversificationSection.innerHTML = "";
+      projectionSection.innerHTML = "";
+      metricsGrid.innerHTML = "";
+      commentaryEl.textContent = "";
+
+      const holdings = readHoldings();
+      if (holdings.length === 0) {
+        inputError.style.display = "block";
+        inputError.textContent = "Please enter at least one holding with a positive amount.";
+        return;
+      }
+
+      const horizonYears = parseInt(document.getElementById("horizonYears").value, 10);
+      const nMonths = horizonYears * 12;
+      const nSims = parseInt(document.getElementById("numSims").value, 10);
+      const rfRate = parseFloat(document.getElementById("rfRate").value || "0") / 100;
+
+      try {
+        const { portfolioPaths, totalInitial } = runMonteCarlo(holdings, nMonths, nSims);
+        const benchPaths = simulateBenchmark(nMonths, nSims);
+
+        const div = computeDiversification(holdings);
+        const horizons = [3, 6, 9, 12, 36, 60];
+        const summary = summarizeHorizons(portfolioPaths, totalInitial, horizons);
+
+        // Diversification section
+        const weightsRows = Object.entries(div.weights)
+          .map(([name, w]) => `<tr><td>${name}</td><td>${(w * 100).toFixed(1)}%</td></tr>`)
+          .join("");
+
+        diversificationSection.innerHTML = `
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total portfolio value</div>
+              <div class="stat-value">$${totalInitial.toLocaleString(undefined, {maximumFractionDigits:0})}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Effective number of holdings</div>
+              <div class="stat-value">${div.effectiveN.toFixed(2)}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Number of positions</div>
+              <div class="stat-value">${holdings.length}</div>
+            </div>
+          </div>
+
+          <h3 style="margin-top:14px; font-size:0.9rem;">Weights</h3>
+          <table>
+            <thead><tr><th>Holding</th><th>Weight</th></tr></thead>
+            <tbody>${weightsRows}</tbody>
+          </table>
+        `;
+
+        // Projection section
+        if (summary.length > 0) {
+          const rows = summary.map(r => `
+            <tr>
+              <td>${r.horizon} m</td>
+              <td>$${r.medianVal.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
+              <td>$${r.p10.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
+              <td>$${r.p90.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
+              <td>${fmtPct(r.medianRet)}</td>
+              <td>${fmtPct(r.p10Ret)}</td>
+              <td>${fmtPct(r.p90Ret)}</td>
+            </tr>
+          `).join("");
+
+          projectionSection.innerHTML = `
+            <h3 style="font-size:0.9rem;">Forward Projections</h3>
+            <table class="projection-table">
+              <thead>
+                <tr>
+                  <th>Horizon</th>
+                  <th>Median value</th>
+                  <th>10th %</th>
+                  <th>90th %</th>
+                  <th>Median return</th>
+                  <th>10th %</th>
+                  <th>90th %</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          `;
+        }
+
+        // Risk metrics
+        const metrics = computeRiskMetrics(portfolioPaths, benchPaths, rfRate, nMonths);
+
+        metricsGrid.innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Holding period return (median, ${horizonYears}y)</div>
+            <div class="stat-value">${fmtPct(metrics.hprMedian)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Annual arithmetic mean (simulated)</div>
+            <div class="stat-value">${fmtPct(metrics.annualMeanPort)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Sharpe ratio</div>
+            <div class="stat-value">${fmtNum(metrics.sharpe)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Sortino ratio</div>
+            <div class="stat-value">${fmtNum(metrics.sortino)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Alpha vs benchmark</div>
+            <div class="stat-value">${fmtPct(metrics.alpha)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Beta vs benchmark</div>
+            <div class="stat-value">${fmtNum(metrics.beta)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tracking error (annualised)</div>
+            <div class="stat-value">${fmtNum(metrics.trackingError)}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Information ratio</div>
+            <div class="stat-value">${fmtNum(metrics.infoRatio)}</div>
+          </div>
+        `;
+
+        // Commentary
+        commentaryEl.textContent = buildCommentary(
+          holdings,
+          div.weights,
+          div.effectiveN,
+          horizonYears,
+          div.total
+        );
+
+      } catch (err) {
+        inputError.style.display = "block";
+        inputError.textContent = err.message || "Something went wrong in the simulation.";
+      }
+    });
+  </script>
+</body>
+</html>
